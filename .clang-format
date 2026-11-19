@@ -1,0 +1,55 @@
+Language: Cpp
+BasedOnStyle: Google
+
+# ---------- 缩进 ----------
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+IndentCaseLabels: true
+NamespaceIndentation: None
+
+# ---------- 行宽 ----------
+ColumnLimit: 120
+ReflowComments: true
+
+# ---------- 大括号 ----------
+BreakBeforeBraces: Attach
+
+# ---------- 指针与引用 ----------
+PointerAlignment: Left
+
+# ---------- 空格 ----------
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+
+# ---------- 对齐 ----------
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+AlignOperands: true
+
+# ---------- include ----------
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# ---------- namespace ----------
+FixNamespaceComments: true
+
+# ---------- 参数换行 ----------
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializers: BeforeComma
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# ---------- 短语句 ----------
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: Inline
+
+# ---------- 其他 ----------
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
