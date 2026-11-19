@@ -51,8 +51,8 @@ private:
         if (node == nullptr) {
             return;
         }
-        std::cout << "axis" << node->axis << "    (" << node->point.x() << ", " << node->point.y() << ")"
-                  << "    depth" << depth << std::endl;
+        std::cout << "(" << node->point.x() << ", " << node->point.y() << ")"
+                  << "    axis" << node->axis << "    depth" << depth << std::endl;
 
         traverse_print(node->left.get(), depth + 1);
         traverse_print(node->right.get(), depth + 1);
