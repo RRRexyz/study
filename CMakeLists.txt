@@ -10,6 +10,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-unknown-warning-option)
 endif()
 
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 find_package(Eigen3 REQUIRED)
 
 add_executable(main main.cpp)
