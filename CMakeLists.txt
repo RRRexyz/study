@@ -10,4 +10,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-unknown-warning-option)
 endif()
 
+find_package(Eigen3 REQUIRED)
+
 add_executable(main main.cpp)
+
+add_executable(kdtree2 kdtree2.cpp)
+target_link_libraries(kdtree2 PRIVATE Eigen3::Eigen)
