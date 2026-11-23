@@ -7,6 +7,10 @@
 #include <random>
 #include "timer.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using Point = Eigen::Vector2d;
 
 struct KDNode {
@@ -145,6 +149,11 @@ std::vector<Point> generate_points(std::size_t N, double min = -100.0, double ma
 }
 
 int main(int, char**) {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+#endif
+
     constexpr std::size_t N      = 10000;
     std::vector<Point>    points = generate_points(N, -100, 100, 24);
     ScopedTimer           kdtree_build("KD树构建");
