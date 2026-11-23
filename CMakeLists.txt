@@ -20,3 +20,6 @@ add_executable(main main.cpp)
 
 add_executable(kdtree2 kdtree2.cpp)
 target_link_libraries(kdtree2 PRIVATE Eigen3::Eigen)
+
+add_executable(kdtree3 kdtree3.cpp)
+target_link_libraries(kdtree3 PRIVATE Eigen3::Eigen)

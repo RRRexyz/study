@@ -1,8 +1,7 @@
-#pragma once
-
 #include <chrono>
 #include <iostream>
 #include <string>
+#include <utility>
 
 class ScopedTimer {
 public:
@@ -11,12 +10,20 @@ public:
           start_(std::chrono::steady_clock::now()) {}
 
     ~ScopedTimer() {
+        stop();
+    }
+
+    void stop() {
+        if (stopped_) return;
+
         auto end = std::chrono::steady_clock::now();
 
         double elapsed = std::chrono::duration<double, std::milli>(
                              end - start_).count();
 
         std::cout << name_ << ": " << elapsed << " ms\n";
+
+        stopped_ = true;
     }
 
     ScopedTimer(const ScopedTimer&) = delete;
@@ -25,4 +32,5 @@ public:
 private:
     std::string name_;
     std::chrono::steady_clock::time_point start_;
+    bool stopped_ = false;
 };

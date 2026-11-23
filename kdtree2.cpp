@@ -147,15 +147,14 @@ std::vector<Point> generate_points(std::size_t N, double min = -100.0, double ma
 int main(int, char**) {
     constexpr std::size_t N      = 10000;
     std::vector<Point>    points = generate_points(N, -100, 100, 24);
+    ScopedTimer           kdtree_build("KD树构建");
     KDTree                tree(points);
-    // tree.print();
+    kdtree_build.stop();
 
     Point         query(15.278, -34.2352);
-    NearestResult tree_result;
-    {
-        ScopedTimer t("KD树单点最近邻搜索");
-        tree_result = tree.nearest_search(query);
-    }
+    ScopedTimer   kdtree_search("KD树单点最近邻搜索");
+    NearestResult tree_result = tree.nearest_search(query);
+    kdtree_search.stop();
     if (tree_result.point) {
         std::cout << "p = (" << tree_result.point->transpose() << ")    d = " << std::sqrt(tree_result.distance_squared)
                   << std::endl;
@@ -163,11 +162,9 @@ int main(int, char**) {
                   << tree.get_node_visit_count() / static_cast<double>(N) * 100.0 << "%" << std::endl;
     }
 
-    NearestResult brute_result;
-    {
-        ScopedTimer t("暴力单点最近邻搜索");
-        brute_result = brute_force_nearest_search(points, query);
-    }
+    ScopedTimer   brute_search("暴力单点最近邻搜索");
+    NearestResult brute_result = brute_force_nearest_search(points, query);
+    brute_search.stop();
     if (brute_result.point) {
         std::cout << "p = (" << brute_result.point->transpose()
                   << ")    d = " << std::sqrt(brute_result.distance_squared) << std::endl;
