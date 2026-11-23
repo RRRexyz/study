@@ -3,6 +3,9 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <limits>
+#include <random>
+#include "timer.hpp"
 
 using Point = Eigen::Vector2d;
 
@@ -13,18 +16,39 @@ struct KDNode {
     std::unique_ptr<KDNode> right = nullptr;
 };
 
+struct NearestResult {
+    const Point* point;
+    double       distance_squared;
+};
+
 class KDTree {
 public:
-    explicit KDTree(std::vector<Point>& points) { root_ = build(points, 0, static_cast<int>(points.size())); }
+    explicit KDTree(std::vector<Point> points) { root_ = build(points, 0, static_cast<int>(points.size())); }
 
     // 前序遍历打印节点信息
-    void print() { traverse_print(root_.get()); }
+    void print() const { traverse_print(root_.get()); }
+
+    NearestResult nearest_search(const Point& query) {
+        node_visit_count = 0;
+
+        const KDNode* best_node = nullptr;
+        double        best_d2   = std::numeric_limits<double>::infinity();
+
+        nearest_search_recursive(query, root_.get(), best_node, best_d2);
+
+        const Point* point = best_node ? &best_node->point : nullptr;
+        return NearestResult{point, best_d2};
+    }
+
+    std::size_t get_node_visit_count() const { return node_visit_count; }
 
 private:
     std::unique_ptr<KDNode> root_ = nullptr;
 
+    int node_visit_count = 0;
+
     // points 按值传参，不改变原有点序列的顺序
-    std::unique_ptr<KDNode> build(std::vector<Point> points, int left, int right, int depth = 0) {
+    std::unique_ptr<KDNode> build(std::vector<Point>& points, int left, int right, int depth = 0) {
         // 递归终止条件
         if (left >= right) {
             return nullptr;
@@ -47,29 +71,105 @@ private:
     }
 
     // 前序遍历打印节点信息
-    void traverse_print(KDNode* node, int depth = 0) {
+    void traverse_print(const KDNode* node, int depth = 0) const {
         if (node == nullptr) {
             return;
         }
-        std::cout << "(" << node->point.x() << ", " << node->point.y() << ")"
-                  << "    axis" << node->axis << "    depth" << depth << std::endl;
+        std::cout << "(" << node->point.transpose() << ")" << "    axis" << node->axis << "    depth" << depth
+                  << std::endl;
 
         traverse_print(node->left.get(), depth + 1);
         traverse_print(node->right.get(), depth + 1);
     }
+
+    void nearest_search_recursive(const Point&   query,
+                                  const KDNode*  current,
+                                  const KDNode*& best_node,
+                                  double&        best_d2) {
+        if (current == nullptr) {
+            return;
+        }
+        ++node_visit_count;
+
+        double d2 = (current->point - query).squaredNorm();
+        if (d2 < best_d2) {
+            best_d2   = d2;
+            best_node = current;
+        }
+
+        const KDNode* near_child;
+        const KDNode* far_child;
+        double        delta = query[current->axis] - current->point[current->axis];
+        if (delta <= 0) {
+            near_child = current->left.get();
+            far_child  = current->right.get();
+        } else {
+            near_child = current->right.get();
+            far_child  = current->left.get();
+        }
+
+        nearest_search_recursive(query, near_child, best_node, best_d2);
+
+        if (delta * delta <= best_d2) {
+            nearest_search_recursive(query, far_child, best_node, best_d2);
+        }
+    }
 };
 
-int main(int, char**) {
-    std::vector<Point> points{
-        Point(2, 3),
-        Point(5, 4),
-        Point(9, 6),
-        Point(4, 7),
-        Point(8, 1),
-        Point(7, 2),
-        Point(3, 6),
-    };
+NearestResult brute_force_nearest_search(const std::vector<Point>& points, const Point& query) {
+    if (points.empty()) {
+        return NearestResult{nullptr, std::numeric_limits<double>::infinity()};
+    }
 
-    KDTree tree(points);
-    tree.print();
+    const Point* best_point = nullptr;
+    double       best_d2    = std::numeric_limits<double>::infinity();
+    for (const Point& point : points) {
+        double d2 = (query - point).squaredNorm();
+        if (d2 < best_d2) {
+            best_d2    = d2;
+            best_point = &point;
+        }
+    }
+    return NearestResult{best_point, best_d2};
+}
+
+std::vector<Point> generate_points(std::size_t N, double min = -100.0, double max = 100.0, unsigned int seed = 24) {
+    std::mt19937                           gen(seed);
+    std::uniform_real_distribution<double> dist(min, max);
+    std::vector<Point>                     points;
+    points.reserve(N);
+    for (std::size_t i = 0; i < N; ++i) {
+        points.emplace_back(dist(gen), dist(gen));
+    }
+    return points;
+}
+
+int main(int, char**) {
+    constexpr std::size_t N      = 10000;
+    std::vector<Point>    points = generate_points(N, -100, 100, 24);
+    KDTree                tree(points);
+    // tree.print();
+
+    Point         query(15.278, -34.2352);
+    NearestResult tree_result;
+    {
+        ScopedTimer t("KD树单点最近邻搜索");
+        tree_result = tree.nearest_search(query);
+    }
+    if (tree_result.point) {
+        std::cout << "p = (" << tree_result.point->transpose() << ")    d = " << std::sqrt(tree_result.distance_squared)
+                  << std::endl;
+        std::cout << "节点访问率 = " << tree.get_node_visit_count() << "/" << N << " = "
+                  << tree.get_node_visit_count() / static_cast<double>(N) * 100.0 << "%" << std::endl;
+    }
+
+    NearestResult brute_result;
+    {
+        ScopedTimer t("暴力单点最近邻搜索");
+        brute_result = brute_force_nearest_search(points, query);
+    }
+    if (brute_result.point) {
+        std::cout << "p = (" << brute_result.point->transpose()
+                  << ")    d = " << std::sqrt(brute_result.distance_squared) << std::endl;
+    }
 }
