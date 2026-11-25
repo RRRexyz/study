@@ -23,3 +23,6 @@ target_link_libraries(kdtree2 PRIVATE Eigen3::Eigen)
 
 add_executable(kdtree3 kdtree3.cpp)
 target_link_libraries(kdtree3 PRIVATE Eigen3::Eigen)
+
+add_executable(pointcloud_motion_undistort pointcloud_motion_undistort.cpp)
+target_link_libraries(pointcloud_motion_undistort PRIVATE Eigen3::Eigen)
