@@ -6,6 +6,7 @@
 #include <limits>
 #include <random>
 #include "timer.hpp"
+#include <queue>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -24,6 +25,13 @@ struct NearestResult {
     const Point* point;
     double       distance_squared;
 };
+
+struct DistanceCompare {
+    bool operator()(const NearestResult& a, const NearestResult& b) const {
+        return a.distance_squared < b.distance_squared;
+    }
+};
+using MaxHeap = std::priority_queue<NearestResult, std::vector<NearestResult>, DistanceCompare>;
 
 class KDTree {
 public:
@@ -45,6 +53,23 @@ public:
     }
 
     std::size_t get_node_visit_count() const { return node_visit_count; }
+
+    std::vector<NearestResult> knn_search(const Point& query, std::size_t k) const {
+        std::vector<NearestResult> results;
+        if (k == 0) {
+            return results;
+        }
+
+        MaxHeap heap;
+        knn_search_recursive(query, root_.get(), k, heap);
+        results.reserve(heap.size());
+        while (!heap.empty()) {
+            results.push_back(heap.top());
+            heap.pop();
+        }
+        std::reverse(results.begin(), results.end());
+        return results;
+    }
 
 private:
     std::unique_ptr<KDNode> root_ = nullptr;
@@ -118,6 +143,8 @@ private:
             nearest_search_recursive(query, far_child, best_node, best_d2);
         }
     }
+
+    void knn_search_recursive(const Point& query, const KDNode* current, std::size_t k, MaxHeap& heap) const {}
 };
 
 NearestResult brute_force_nearest_search(const std::vector<Point>& points, const Point& query) {
@@ -178,4 +205,10 @@ int main(int, char**) {
         std::cout << "p = (" << brute_result.point->transpose()
                   << ")    d = " << std::sqrt(brute_result.distance_squared) << std::endl;
     }
+
+    MaxHeap heap;
+    heap.push(NearestResult{nullptr, 4});
+    heap.push(NearestResult{nullptr, 9});
+    heap.push(NearestResult{nullptr, 16});
+    std::cout << "heap top: " << heap.top().distance_squared << "\n";
 }
